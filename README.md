@@ -1,24 +1,66 @@
-# stealth-portfolio-zama
-Stealth Portfolio is a confidential DeFi position manager built on top of the Zama Confidential Blockchain Protocol.
-It allows on-chain traders to track their real positions, PnL and risk metrics while keeping all sensitive data fully encrypted with FHE.
+# Stealth Portfolio – Encrypted DeFi Position Manager on Zama
 
-With Stealth Portfolio, a trader can:
+Stealth Portfolio is an **encrypted on-chain portfolio & PnL tracker** built on top of the **Zama Confidential Blockchain Protocol (FHEVM)**.
 
-connect a wallet and register positions (spot, perp, options, LP tokens etc.) into an encrypted state,
+It lets traders record positions and PnL **on-chain but fully encrypted**, and compute basic risk metrics over encrypted data. Only the owner (and optionally approved viewers) can see the decrypted numbers, while the contract logic runs over ciphertext using FHEVM.
 
-compute PnL, exposure, and risk indicators over fully homomorphically encrypted data,
+> Built for the [Zama Developer Program](https://www.zama.ai/programs/developer-program).
 
-selectively reveal high-level, aggregated stats (e.g. 30-day ROI range, Sharpe ratio bucket) without exposing raw positions or wallet balances.
+---
 
-Why Zama / FHE?
-Today, on-chain traders face a trade-off between transparency and alpha leakage. Public dashboards leak strategies, while off-chain spreadsheets are non-verifiable. By using Zama’s FHE-powered confidential smart contracts, Stealth Portfolio keeps all user data encrypted at rest and in computation, while still allowing verifiable proofs that “a trader meets certain criteria” (e.g. track record, risk limits) without revealing the underlying details.
+## ✨ Key Features
 
-Tech outline
+- **Encrypted on-chain portfolio**
+  - Store positions and PnL per wallet using FHE encrypted types (e.g. `euint64`).
+  - No raw balances or PnL ever appear on-chain in plaintext.
 
-Smart contracts: Zama Confidential Blockchain Protocol / FHEVM used to store and update encrypted position states and compute encrypted PnL & risk metrics.
+- **On-chain computation over encrypted data**
+  - Use FHEVM operations to update PnL and exposure directly on encrypted values.
+  - Demonstrates homomorphic addition / aggregation for confidential finance.
 
-Frontend: React/Next.js dashboard for position input, visualization of decrypted summaries, and optional data sharing controls.
+- **Selective disclosure**
+  - The owner can decrypt their own stats locally from the encrypted state.
+  - (Roadmap) Share only aggregated metrics (ROI bucket, Sharpe-like score) with third parties.
 
-Integrations (stretch goals): pull prices / positions from existing DeFi protocols or chain indexers, then push into the encrypted state on Zama.
+- **Modern dApp stack**
+  - Contracts: Hardhat + FHEVM
+  - Frontend: React / Next.js + Tailwind + RainbowKit/wagmi
+  - Network: FHEVM local node & Sepolia testnet support
 
-The goal of the project is to showcase a practical trading-oriented use case for Zama’s FHE stack and provide a reusable pattern for other privacy-preserving DeFi analytics tools.
+---
+
+## 🏗 Architecture
+
+At a high level:
+
+- **Smart contract (`StealthPortfolio.sol`)**
+  - Manages encrypted portfolio state per user:
+    - Encrypted total PnL
+    - Encrypted total notional volume
+    - (Optional) Encrypted per-position fields
+  - Uses FHEVM types and operators to update state on-chain without ever decrypting.
+
+- **Frontend (Next.js)**
+  - Connects via EVM wallet (MetaMask etc.)
+  - Uses the FHEVM SDK to:
+    - Encrypt position/PnL updates client-side.
+    - Send encrypted payloads to the contract.
+    - Request & decrypt encrypted summaries for the connected wallet.
+
+- **Relayer / RPC**
+  - Uses Zama’s FHEVM-ready node (local Hardhat + FHEVM plugin).
+  - Optional: Sepolia testnet deployment.
+
+---
+
+## 📁 Project Structure
+
+This repository is designed to follow Zama’s recommended layout and builds on top of their FHEVM templates.
+
+```bash
+stealth-portfolio-zama/
+├── packages/
+│   ├── fhevm-hardhat-template/   # Contracts & deployment (extended with StealthPortfolio.sol)
+│   ├── fhevm-sdk/                # FHEVM SDK helpers for encryption/decryption
+│   └── nextjs/                   # React / Next.js frontend (Stealth Portfolio UI)
+└── scripts/                      # Helper scripts (deployment, seeding, etc.)
